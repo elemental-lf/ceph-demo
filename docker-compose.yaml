@@ -1,0 +1,30 @@
+version: "3.2"
+services:
+  # Based on https://github.com/ceph/ceph-container/issues/1475#issue-493890428
+  ceph:
+    build:
+      context: ./ceph-demo
+    hostname: ceph-demo
+    ports:
+      # RGW
+      - "8080:8080"
+      # Dashboard
+      - "8443:8443"
+      # Sree (S3 frontend)
+      - "5000:5000"
+    environment:
+      MON_IP: "127.0.0.1"
+      CEPH_DAEMON: "DEMO"
+      CEPH_PUBLIC_NETWORK: "0.0.0.0/0"
+      CEPH_DEMO_UID: "someuid"
+      CEPH_DEMO_ACCESS_KEY: "somekey"
+      CEPH_DEMO_SECRET_KEY: "somesecret"
+      CEPH_DEMO_DASHBOARD_USER: "admin"
+      CEPH_DEMO_DASHBOARD_PASSWORD: "admin"
+      #DEBUG: "verbose"
+    volumes:
+      - ceph-data:/var/lib/ceph
+      - ceph-etc:/etc/ceph
+volumes:
+  ceph-data: {}
+  ceph-etc: {}
