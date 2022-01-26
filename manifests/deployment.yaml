@@ -1,0 +1,58 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    io.kompose.service: ceph-demo
+  name: ceph-demo
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: ceph-demo
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        io.kompose.service: ceph-demo
+    spec:
+      containers:
+        - env:
+            - name: CEPH_DAEMON
+              value: DEMO
+            - name: CEPH_DEMO_ACCESS_KEY
+              value: somekey
+            - name: CEPH_DEMO_DASHBOARD_PASSWORD
+              value: admin
+            - name: CEPH_DEMO_DASHBOARD_USER
+              value: admin
+            - name: CEPH_DEMO_SECRET_KEY
+              value: somesecret
+            - name: CEPH_DEMO_UID
+              value: someuid
+            - name: CEPH_PUBLIC_NETWORK
+              value: 0.0.0.0/0
+            - name: MON_IP
+              value: 127.0.0.1
+            - name: BLUESTORE_BLOCK_SIZE
+              value: 1G
+          image: ceph-demo
+          imagePullPolicy: Never
+          name: ceph-demo
+          ports:
+            - containerPort: 8080
+            - containerPort: 8443
+            - containerPort: 5123
+          resources: {}
+          volumeMounts:
+            - mountPath: /var/lib/ceph
+              name: ceph-demo-data
+            - mountPath: /etc/ceph
+              name: ceph-demo-etc
+      hostname: ceph-demo
+      restartPolicy: Always
+      volumes:
+        - name: ceph-demo-data
+          emptyDir: {}
+        - name: ceph-demo-etc
+          emptyDir: {}
