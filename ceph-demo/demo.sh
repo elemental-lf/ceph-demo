@@ -78,17 +78,15 @@ function parse_size {
 function bootstrap_osd {
   ceph "${CLI_OPTS[@]}" config set global osd_pool_default_pg_autoscale_mode off
 
-  if [[ -n "$OSD_DEVICE" ]]; then
-    if [[ -b "$OSD_DEVICE" ]]; then
-      if [ -n "$BLUESTORE_BLOCK_SIZE" ]; then
-        size=$(parse_size "$BLUESTORE_BLOCK_SIZE")
-        if ! grep -qE "bluestore_block_size = $size" /etc/ceph/"${CLUSTER}".conf; then
-          echo "bluestore_block_size = $size" >> /etc/ceph/"${CLUSTER}".conf
-        fi
-      fi
-    else
-      log "Invalid $OSD_DEVICE, only block device is supported"
-      exit 1
+  if [[ -n "$OSD_DEVICE" && ! -b "$OSD_DEVICE" ]]; then
+    log "Invalid $OSD_DEVICE, only block device is supported"
+    exit 1
+  fi
+
+  if [ -n "$BLUESTORE_BLOCK_SIZE" ]; then
+    size=$(parse_size "$BLUESTORE_BLOCK_SIZE")
+    if ! grep -qE "bluestore_block_size = $size" /etc/ceph/"${CLUSTER}".conf; then
+      echo "bluestore_block_size = $size" >> /etc/ceph/"${CLUSTER}".conf
     fi
   fi
 

@@ -21,6 +21,7 @@ services:
       CEPH_DEMO_SECRET_KEY: "somesecret"
       CEPH_DEMO_DASHBOARD_USER: "admin"
       CEPH_DEMO_DASHBOARD_PASSWORD: "admin"
+      BLUESTORE_BLOCK_SIZE: "1G"
       #DEBUG: "verbose"
     volumes:
       - ceph-data:/var/lib/ceph
