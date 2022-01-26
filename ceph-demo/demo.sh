@@ -1,5 +1,5 @@
 #!/bin/bash
-set -e
+set -exo pipefail
 
 # This removes the -d from DAEMON_OPTS, so that daemons will background themselves
 unset "DAEMON_OPTS[${#DAEMON_OPTS[@]}-1]" # remove the last element of the array
@@ -76,6 +76,8 @@ function parse_size {
 }
 
 function bootstrap_osd {
+  ceph "${CLI_OPTS[@]}" config set global osd_pool_default_pg_autoscale_mode off
+
   if [[ -n "$OSD_DEVICE" ]]; then
     if [[ -b "$OSD_DEVICE" ]]; then
       if [ -n "$BLUESTORE_BLOCK_SIZE" ]; then
@@ -276,12 +278,17 @@ function bootstrap_dashboard {
   if [ -n "$CEPH_DEMO_DASHBOARD_USER" ] && [ -n "$CEPH_DEMO_DASHBOARD_PASSWORD" ]; then
     ceph "${CLI_OPTS[@]}" mgr module enable dashboard
     ceph "${CLI_OPTS[@]}" dashboard create-self-signed-cert
-    ceph "${CLI_OPTS[@]}" dashboard set-login-credentials "$CEPH_DEMO_DASHBOARD_USER" "$CEPH_DEMO_DASHBOARD_PASSWORD"
+    echo -n "$CEPH_DEMO_DASHBOARD_PASSWORD" >/tmp/dashboard-user-password
+    ceph "${CLI_OPTS[@]}" dashboard ac-user-create "$CEPH_DEMO_DASHBOARD_USER" administrator -i /tmp/dashboard-user-password --force-password
+
+    ceph "${CLI_OPTS[@]}" dashboard feature disable iscsi
+    ceph "${CLI_OPTS[@]}" dashboard feature disable nfs
+
     if [ -n "$CEPH_DEMO_ACCESS_KEY" ] && [ -n "$CEPH_DEMO_SECRET_KEY" ]; then
-      ceph dashboard set-rgw-api-access-key "$CEPH_DEMO_ACCESS_KEY"
-      ceph dashboard set-rgw-api-secret-key "$CEPH_DEMO_SECRET_KEY"
-      ceph dashboard set-rgw-api-host "${RGW_NAME}"
-      ceph dashboard set-rgw-api-port "${RGW_FRONTEND_PORT}"
+      echo -n "$CEPH_DEMO_ACCESS_KEY" >/tmp/rgw-api-access-key
+      echo -n "$CEPH_DEMO_SECRET_KEY" >/tmp/rgw-api-secret-key
+      ceph "${CLI_OPTS[@]}" dashboard set-rgw-api-access-key -i /tmp/rgw-api-access-key
+      ceph "${CLI_OPTS[@]}" dashboard set-rgw-api-secret-key -i /tmp/rgw-api-secret-key
     fi
   fi
 }
